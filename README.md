@@ -1,5 +1,4 @@
 # Xodus Remote Entity Store
-___
 
 # Proposal
 
