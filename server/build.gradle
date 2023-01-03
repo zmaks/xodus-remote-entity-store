@@ -1,0 +1,27 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
+    id "io.ktor.plugin" version "$ktor_version"
+}
+
+group "com.zheltoukhov.xres"
+version "0.0.1"
+mainClassName = "com.zheltoukhov.xres.server.Application.kt"
+
+def isDevelopment = project.ext.has("development")
+applicationDefaultJvmArgs = ["-Dio.ktor.development=$isDevelopment"]
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "io.ktor:ktor-network:$ktor_version"
+    implementation "ch.qos.logback:logback-classic:$logback_version"
+    implementation "org.jetbrains.xodus:xodus-openAPI:$xodus_version"
+    implementation "org.jetbrains.xodus:xodus-entity-store:$xodus_version"
+    implementation "org.jetbrains.xodus:xodus-environment:$xodus_version"
+    implementation "org.jetbrains.xodus:xodus-vfs:$xodus_version"
+
+    testImplementation "io.ktor:ktor-server-tests-jvm:$ktor_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+}
