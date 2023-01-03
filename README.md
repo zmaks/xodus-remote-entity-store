@@ -24,7 +24,7 @@ Allows to store simple entities and manage them **transactionally** by multiple 
 ## Client Library
 
 - Provides CRUD API to manage entities
-- Supports transactions
+- Supports transactions (keeps snapshot isolation level)
 - Communicates with the server over TCP/IP
 
 ## Implementation Details
@@ -36,8 +36,9 @@ The server has an instance of [Xodus persistent entity store](https://github.com
 as a storage of entities. The server runs on a specific host and has a socket that's bound to a specific port provided 
 in the server config. When server accepts a connection from a client, it parses the commands and passes them to API layer
 which interacts with the Xodus store. The API layer provides methods to add, modify, delete, get, list entities.
-Each connection runs a new transaction and each command is executed within the transaction. The transaction is committed 
-only after the commit command is received, otherwise all the commands are rolled back.
+Transactions are stored in memory in order to be used by several connections by transaction id, so no need to keep
+one TCP connection for whole transaction. The transaction is committed only after the commit command is received,
+otherwise all the commands are rolled back.
 
 The client is a library that can be added to any JVM application to connect to the remote entity store. The library
 provides a connection abstraction which allows to create a client socket to initiate communication with the server 
