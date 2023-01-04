@@ -65,6 +65,7 @@ The reasons of using Ktor:
 2. [Security] Add Secure Sockets (TLS) support
 3. [Connection] Add client connection pool support
 4. [ORM] Add ORM support to the client lib
+5. Improve entity search/filtering
 
 
 
