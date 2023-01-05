@@ -1,4 +1,4 @@
-package com.zheltoukhov.xres.server.protocol
+package com.zheltoukhov.xres.protocol
 
 interface RequestPayload {
     companion object {

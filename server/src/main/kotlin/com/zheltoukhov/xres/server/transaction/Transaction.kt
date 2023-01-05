@@ -1,8 +1,8 @@
 package com.zheltoukhov.xres.server.transaction
 
-import com.zheltoukhov.xres.server.dto.EntityDto
-import com.zheltoukhov.xres.server.dto.FilterDto
-import com.zheltoukhov.xres.server.dto.PageDto
+import com.zheltoukhov.xres.protocol.dto.EntityDto
+import com.zheltoukhov.xres.protocol.dto.FilterDto
+import com.zheltoukhov.xres.protocol.dto.PageDto
 
 interface Transaction {
 

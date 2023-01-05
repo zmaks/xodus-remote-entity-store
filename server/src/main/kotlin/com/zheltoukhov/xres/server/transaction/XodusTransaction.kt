@@ -1,8 +1,8 @@
 package com.zheltoukhov.xres.server.transaction
 
-import com.zheltoukhov.xres.server.dto.EntityDto
-import com.zheltoukhov.xres.server.dto.FilterDto
-import com.zheltoukhov.xres.server.dto.PageDto
+import com.zheltoukhov.xres.protocol.dto.EntityDto
+import com.zheltoukhov.xres.protocol.dto.FilterDto
+import com.zheltoukhov.xres.protocol.dto.PageDto
 import com.zheltoukhov.xres.server.exception.EntityNotFoundException
 import jetbrains.exodus.entitystore.*
 import java.util.*
@@ -43,7 +43,7 @@ class XodusTransaction(
 
     override fun find(filter: FilterDto): PageDto {
         val entityIterable = if (filter.propertyName != null && filter.value != null) {
-            txn.find(filter.entityType, filter.propertyName, filter.value)
+            txn.find(filter.entityType, filter.propertyName!!, filter.value!!)
         } else {
             txn.getAll(filter.entityType)
         }

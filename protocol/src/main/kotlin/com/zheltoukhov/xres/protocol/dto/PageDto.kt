@@ -1,6 +1,6 @@
-package com.zheltoukhov.xres.server.dto
+package com.zheltoukhov.xres.protocol.dto
 
-import com.zheltoukhov.xres.server.protocol.ResponsePayload
+import com.zheltoukhov.xres.protocol.ResponsePayload
 
 data class PageDto(
     val total: Long,
