@@ -1,7 +1,7 @@
 package com.zheltoukhov.xres.protocol
 
-import com.zheltoukhov.xres.protocol.command.CommandType
 import com.zheltoukhov.xres.protocol.dto.*
+import com.zheltoukhov.xres.protocol.exception.CommunicationException
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import java.nio.ByteBuffer
@@ -24,6 +24,8 @@ class Protocol(
         STRING(8);
     }
 
+    private val errorCode: Byte = -1
+
     fun flush() = writeChannel.flush()
 
     suspend fun writeCommandType(command: CommandType) {
@@ -32,7 +34,21 @@ class Protocol(
 
     suspend fun readCommandType(): CommandType {
         val code = readChannel.readByte()
+        if (code == errorCode) {
+            val error = readError()
+            throw CommunicationException(error.message)
+        }
         return CommandType.fromCode(code) ?: throw IllegalArgumentException("[val=$code] Unknown command code")
+    }
+
+    suspend fun writeError(error: ErrorDto) {
+        writeChannel.writeByte(errorCode)
+        writeStringEncoded(error.message)
+    }
+
+    suspend fun readError(): ErrorDto {
+        val message = readStringDecoded()
+        return ErrorDto(message)
     }
 
     suspend fun readUUID(): UUID {
@@ -145,15 +161,6 @@ class Protocol(
     suspend fun readTx(): TxDto {
         val readOnly = readChannel.readBoolean()
         return TxDto(readOnly)
-    }
-
-    suspend fun writeError(error: ErrorDto) {
-        writeStringEncoded(error.message)
-    }
-
-    suspend fun readError(): ErrorDto {
-        val message = readStringDecoded()
-        return ErrorDto(message)
     }
 
     suspend fun writeBooleanResult(booleanResultDto: BooleanResultDto) {

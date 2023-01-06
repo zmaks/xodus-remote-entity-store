@@ -4,12 +4,12 @@ import java.util.UUID
 
 data class Request<T : RequestPayload>(
     val header: Header,
-    val payload: T
+    val payload: T?
 )
 
 data class Response<T : ResponsePayload>(
     val header: Header,
-    val payload: T
+    val payload: T?
 )
 
 data class Header(
