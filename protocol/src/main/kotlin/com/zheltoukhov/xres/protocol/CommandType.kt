@@ -1,22 +1,19 @@
 package com.zheltoukhov.xres.protocol
 
-import com.zheltoukhov.xres.protocol.command.*
-
 
 enum class CommandType(
-    val code: Byte,
-    val command: Command<out RequestPayload, out ResponsePayload>
+    val code: Byte
 ) {
-    BEGIN_TX(1, BeginTxCommand),
-    COMMIT(2, CommitCommand),
-    FLUSH(3, FlushCommand),
-    ABORT(4, AbortCommand),
+    BEGIN_TX(1),
+    COMMIT(2),
+    FLUSH(3),
+    ABORT(4),
 
-    CREATE(11, CreateCommand),
-    UPDATE(12, UpdateCommand),
-    DELETE(13, DeleteCommand),
-    GET(14, GetCommand),
-    FIND(21, FindCommand);
+    CREATE(11),
+    UPDATE(12),
+    DELETE(13),
+    GET(14),
+    FIND(21);
 
     companion object {
         private val CODE_MAP = CommandType.values().associateBy { it.code }

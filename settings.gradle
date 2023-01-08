@@ -2,3 +2,4 @@ rootProject.name = "xodus-remote-entity-store"
 
 include 'server'
 include 'protocol'
+include 'client'

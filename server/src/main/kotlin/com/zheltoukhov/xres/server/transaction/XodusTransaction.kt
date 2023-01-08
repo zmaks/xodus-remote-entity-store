@@ -1,24 +1,26 @@
 package com.zheltoukhov.xres.server.transaction
 
-import com.zheltoukhov.xres.protocol.dto.EntityDto
-import com.zheltoukhov.xres.protocol.dto.FilterDto
-import com.zheltoukhov.xres.protocol.dto.PageDto
+import com.zheltoukhov.xres.protocol.dto.*
 import com.zheltoukhov.xres.server.exception.EntityNotFoundException
 import jetbrains.exodus.entitystore.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.*
 
 class XodusTransaction(
     store: PersistentEntityStore
 ) : Transaction {
 
-    private val txnId: String = UUID.randomUUID().toString()
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
+    private val txnId: UUID = UUID.randomUUID()
     private val txn: StoreTransaction = store.beginTransaction()
 
     companion object {
         const val DEFAULT_LIMIT_PER_PAGE = 100
     }
 
-    override fun getTransactionId(): String = txnId
+    override fun getTransactionId(): UUID = txnId
 
     override fun create(dto: EntityDto): EntityDto {
         return txn.newEntity(dto.type)
@@ -33,12 +35,13 @@ class XodusTransaction(
             .toDto()
     }
 
-    override fun delete(entityId: String): Boolean {
-        return getEntityById(entityId).delete()
+    override fun delete(entityIdDto: EntityIdDto): BooleanResultDto {
+        val res = getEntityById(entityIdDto.id).delete()
+        return BooleanResultDto(res)
     }
 
-    override fun get(entityId: String): EntityDto {
-        return getEntityById(entityId).toDto()
+    override fun get(entityIdDto: EntityIdDto): EntityDto {
+        return getEntityById(entityIdDto.id).toDto()
     }
 
     override fun find(filter: FilterDto): PageDto {
@@ -58,12 +61,14 @@ class XodusTransaction(
         return PageDto(total, skip, take, entities)
     }
 
-    override fun commit(): Boolean {
-        return txn.commit()
+    override fun commit(): BooleanResultDto {
+        val result = txn.commit()
+        return BooleanResultDto(result)
     }
 
-    override fun flush(): Boolean {
-        return txn.flush()
+    override fun flush(): BooleanResultDto {
+        val result = txn.flush()
+        return BooleanResultDto(result)
     }
 
     override fun abort() {

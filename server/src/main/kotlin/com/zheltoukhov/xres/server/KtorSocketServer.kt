@@ -1,17 +1,17 @@
 package com.zheltoukhov.xres.server
 
+import com.zheltoukhov.xres.protocol.Protocol
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
-import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class KtorSocketServer(
-    private val port: Int?
+    private val port: Int?,
+    private val messageHandler: CommandHandler
 ) {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -26,26 +26,22 @@ class KtorSocketServer(
 
             while (true) {
                 val socket = serverSocket.accept()
-                log.debug("Accepted connection from ${socket.remoteAddress}")
-
+                val remoteAddress = socket.remoteAddress
+                log.debug("Accepted connection from $remoteAddress")
                 launch {
-                    val read = socket.openReadChannel()
-                    val write = socket.openWriteChannel()
                     try {
-                        while (true) {
-                            //TODO
-                            val line = read.readUTF8Line()
-                            println(line)
-                            write.writeStringUtf8("$line\n")
-                            write.flush()
-                        }
+                        val read = socket.openReadChannel()
+                        val write = socket.openWriteChannel()
+                        messageHandler.handle(Protocol(write, read))
                     } catch (e: Throwable) {
-                        log.error("Socket server error, closing connection ${socket.remoteAddress}", e)
-                        withContext(Dispatchers.IO) {
-                            socket.close()
-                        }
+                        log.error("Socket server error, closing connection $remoteAddress", e)
+                    } finally {
+                        socket.close()
+                        socket.awaitClosed()
+                        log.debug("Connection closed $remoteAddress")
                     }
                 }
+
             }
         }
     }

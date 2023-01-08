@@ -1,10 +1,19 @@
 package com.zheltoukhov.xres.server
 
+import com.zheltoukhov.xres.server.transaction.TransactionProvider
+import jetbrains.exodus.entitystore.PersistentEntityStores
+
 const val PORT_PARAM = "-p"
+const val FILE_PARAM = "-f"
+
+const val DEFAULT_STORE_DIR = ".store-file"
 
 fun main(args: Array<String>) {
     val appArgs = parseArgs(args)
-    KtorSocketServer(appArgs.port).run()
+    val store = PersistentEntityStores.newInstance(appArgs.storeDir)
+    val transactionFactory = TransactionProvider(store)
+    val commandHandler = CommandHandler(transactionFactory)
+    KtorSocketServer(appArgs.port, commandHandler).run()
 }
 
 fun parseArgs(args: Array<String>): AppArguments {
@@ -18,10 +27,12 @@ fun parseArgs(args: Array<String>): AppArguments {
     }
 
     return AppArguments(
-        port = argsMap[PORT_PARAM]?.toIntOrNull()
+        port = argsMap[PORT_PARAM]?.toIntOrNull(),
+        storeDir = argsMap[FILE_PARAM] ?: DEFAULT_STORE_DIR
     )
 }
 
 data class AppArguments(
-    val port: Int?
+    val port: Int?,
+    val storeDir: String
 )

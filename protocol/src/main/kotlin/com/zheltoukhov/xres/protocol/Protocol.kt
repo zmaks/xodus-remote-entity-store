@@ -24,9 +24,9 @@ class Protocol(
         STRING(8);
     }
 
-    private val errorCode: Byte = -1
-
     fun flush() = writeChannel.flush()
+
+    suspend fun awaitResponse() = readChannel.awaitContent()
 
     suspend fun writeCommandType(command: CommandType) {
         writeChannel.writeByte(command.code)
@@ -34,15 +34,10 @@ class Protocol(
 
     suspend fun readCommandType(): CommandType {
         val code = readChannel.readByte()
-        if (code == errorCode) {
-            val error = readError()
-            throw CommunicationException(error.message)
-        }
         return CommandType.fromCode(code) ?: throw IllegalArgumentException("[val=$code] Unknown command code")
     }
 
     suspend fun writeError(error: ErrorDto) {
-        writeChannel.writeByte(errorCode)
         writeStringEncoded(error.message)
     }
 
@@ -104,15 +99,30 @@ class Protocol(
         return stringBytes.toString(Charsets.UTF_8)
     }
 
-    suspend fun writeHeader(header: Header) {
+    suspend fun writeRequestHeader(header: RequestHeader) {
         writeUUID(header.requestId)
+        writeChannel.writeInt(header.sequenceNumber)
         writeOptionalValue(header.txId, this::writeUUID)
     }
 
-    suspend fun readHeader(): Header {
+    suspend fun readRequestHeader(): RequestHeader {
         val requestId = readUUID()
+        val order = readChannel.readInt()
         val txId = readOptionalValue(this::readUUID)
-        return Header(requestId, txId)
+        return RequestHeader(requestId, order, txId)
+    }
+
+    suspend fun writeResponseHeader(header: ResponseHeader) {
+        writeUUID(header.requestId)
+        writeChannel.writeBoolean(header.isError)
+        writeOptionalValue(header.txId, this::writeUUID)
+    }
+
+    suspend fun readResponseHeader(): ResponseHeader {
+        val requestId = readUUID()
+        val isError = readChannel.readBoolean()
+        val txId = readOptionalValue(this::readUUID)
+        return ResponseHeader(requestId, txId, isError)
     }
 
     suspend fun writeFilter(filter: FilterDto) {
@@ -278,6 +288,16 @@ class Protocol(
                 readStringDecoded()
             }
             else -> throw IllegalArgumentException("Cannot write unsupported property type code $typeCode")
+        }
+    }
+
+    suspend fun writeErrorResponse(response: Response<ErrorDto>) {
+        try {
+            writeResponseHeader(response.header)
+            writeError(response.payload ?: ErrorDto("No error info provided"))
+            flush()
+        } catch (e: Exception) {
+            throw CommunicationException("Cannot write error response [requestId=${response.header.requestId}]", e)
         }
     }
 
