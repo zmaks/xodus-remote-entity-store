@@ -1,12 +1,10 @@
 package com.zheltoukhov.xres.protocol.command
 
 import com.zheltoukhov.xres.protocol.Protocol
-import com.zheltoukhov.xres.protocol.dto.BooleanResultDto
 import com.zheltoukhov.xres.protocol.dto.FilterDto
 import com.zheltoukhov.xres.protocol.dto.PageDto
-import com.zheltoukhov.xres.protocol.dto.TxDto
 
-object FindCommand : Command<FilterDto, PageDto>() {
+class FindCommand : Command<FilterDto, PageDto>() {
 
     override suspend fun writeRequestPayload(payload: FilterDto, protocol: Protocol) {
         protocol.writeFilter(payload)

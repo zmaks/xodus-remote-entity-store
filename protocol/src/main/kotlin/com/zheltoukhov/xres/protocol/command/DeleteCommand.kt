@@ -3,9 +3,8 @@ package com.zheltoukhov.xres.protocol.command
 import com.zheltoukhov.xres.protocol.Protocol
 import com.zheltoukhov.xres.protocol.dto.BooleanResultDto
 import com.zheltoukhov.xres.protocol.dto.EntityIdDto
-import com.zheltoukhov.xres.protocol.dto.TxDto
 
-object DeleteCommand : Command<EntityIdDto, BooleanResultDto>() {
+class DeleteCommand : Command<EntityIdDto, BooleanResultDto>() {
 
     override suspend fun writeRequestPayload(payload: EntityIdDto, protocol: Protocol) {
         protocol.writeEntityId(payload.id)

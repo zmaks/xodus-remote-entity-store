@@ -5,7 +5,7 @@ import com.zheltoukhov.xres.client.connection.DefaultSocketFactory
 import com.zheltoukhov.xres.client.connection.SocketConfig
 import com.zheltoukhov.xres.client.connection.SocketFactory
 import com.zheltoukhov.xres.protocol.*
-import com.zheltoukhov.xres.protocol.command.*
+import com.zheltoukhov.xres.protocol.command.Commands
 import com.zheltoukhov.xres.protocol.dto.EntityDto
 import com.zheltoukhov.xres.protocol.dto.EntityIdDto
 import com.zheltoukhov.xres.protocol.dto.FilterDto
@@ -13,7 +13,8 @@ import com.zheltoukhov.xres.protocol.dto.TxDto
 
 class StoreClient(
     config: SocketConfig? = null,
-    private val socketFactory: SocketFactory = DefaultSocketFactory(config)
+    private val socketFactory: SocketFactory = DefaultSocketFactory(config),
+    private val commands: Commands = Commands()
 ) {
 
     @Suppress("unchecked_cast")
@@ -27,40 +28,40 @@ class StoreClient(
             protocol.writeCommandType(commandType)
             when (commandType) {
                 CommandType.BEGIN_TX -> {
-                    BeginTxCommand.writeRequest(request as Request<TxDto>, protocol)
-                    BeginTxCommand.readResponse(protocol)
+                    commands.beginTx.writeRequest(request as Request<TxDto>, protocol)
+                    commands.beginTx.readResponse(protocol)
                 }
                 CommandType.COMMIT -> {
-                    CommitCommand.writeRequest(request as Request<EmptyPayload>, protocol)
-                    CommitCommand.readResponse(protocol)
+                    commands.commit.writeRequest(request as Request<EmptyPayload>, protocol)
+                    commands.commit.readResponse(protocol)
                 }
                 CommandType.FLUSH -> {
-                    FlushCommand.writeRequest(request as Request<EmptyPayload>, protocol)
-                    FlushCommand.readResponse(protocol)
+                    commands.flush.writeRequest(request as Request<EmptyPayload>, protocol)
+                    commands.flush.readResponse(protocol)
                 }
                 CommandType.ABORT -> {
-                    AbortCommand.writeRequest(request as Request<EmptyPayload>, protocol)
-                    AbortCommand.readResponse(protocol)
+                    commands.abort.writeRequest(request as Request<EmptyPayload>, protocol)
+                    commands.abort.readResponse(protocol)
                 }
                 CommandType.CREATE -> {
-                    CreateCommand.writeRequest(request as Request<EntityDto>, protocol)
-                    CreateCommand.readResponse(protocol)
+                    commands.create.writeRequest(request as Request<EntityDto>, protocol)
+                    commands.create.readResponse(protocol)
                 }
                 CommandType.UPDATE -> {
-                    UpdateCommand.writeRequest(request as Request<EntityDto>, protocol)
-                    UpdateCommand.readResponse(protocol)
+                    commands.update.writeRequest(request as Request<EntityDto>, protocol)
+                    commands.update.readResponse(protocol)
                 }
                 CommandType.DELETE -> {
-                    DeleteCommand.writeRequest(request as Request<EntityIdDto>, protocol)
-                    DeleteCommand.readResponse(protocol)
+                    commands.delete.writeRequest(request as Request<EntityIdDto>, protocol)
+                    commands.delete.readResponse(protocol)
                 }
                 CommandType.GET -> {
-                    GetCommand.writeRequest(request as Request<EntityIdDto>, protocol)
-                    GetCommand.readResponse(protocol)
+                    commands.get.writeRequest(request as Request<EntityIdDto>, protocol)
+                    commands.get.readResponse(protocol)
                 }
                 CommandType.FIND -> {
-                    FindCommand.writeRequest(request as Request<FilterDto>, protocol)
-                    FindCommand.readResponse(protocol)
+                    commands.find.writeRequest(request as Request<FilterDto>, protocol)
+                    commands.find.readResponse(protocol)
                 }
             }
         }

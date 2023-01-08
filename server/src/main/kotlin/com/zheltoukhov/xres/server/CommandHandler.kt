@@ -1,18 +1,19 @@
 package com.zheltoukhov.xres.server
 
 import com.zheltoukhov.xres.protocol.*
-import com.zheltoukhov.xres.protocol.command.*
+import com.zheltoukhov.xres.protocol.command.Commands
 import com.zheltoukhov.xres.protocol.dto.ErrorDto
-import com.zheltoukhov.xres.protocol.exception.CommandErrorException
 import com.zheltoukhov.xres.protocol.exception.CommunicationException
-import com.zheltoukhov.xres.server.exception.StoreException
-import com.zheltoukhov.xres.server.transaction.TransactionProvider
-import io.ktor.utils.io.*
-import java.util.UUID
+import com.zheltoukhov.xres.server.transaction.TransactionManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.util.*
 
 class CommandHandler(
-    private val provider: TransactionProvider
+    private val provider: TransactionManager,
+    private val commands: Commands = Commands()
 ) {
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     suspend fun handle(protocol: Protocol) {
         val commandType = protocol.readCommandType()
@@ -31,7 +32,8 @@ class CommandHandler(
     }
 
     private suspend fun handleBeginTx(protocol: Protocol, commandType: CommandType) {
-        val request = BeginTxCommand.readRequest(protocol)
+        val request = commands.beginTx.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             if (request.header.txId != null) throw IllegalArgumentException(
                 "$commandType cannot be executed within existing transaction ${request.header.txId} " +
@@ -39,32 +41,38 @@ class CommandHandler(
             )
             val txn = provider.beginTransaction()
             val response = Response<EmptyPayload>(ResponseHeader(request.header.requestId, txn.getTransactionId()))
-            BeginTxCommand.writeResponse(response, protocol)
+            commands.beginTx.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleAbort(protocol: Protocol, commandType: CommandType) {
-        val request = AbortCommand.readRequest(protocol)
+        val request = commands.abort.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             provider.abort(txId)
             val response = Response<EmptyPayload>(ResponseHeader(request.header.requestId, txId))
-            AbortCommand.writeResponse(response, protocol)
+            commands.abort.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleCommit(protocol: Protocol, commandType: CommandType) {
-        val request = CommitCommand.readRequest(protocol)
+        val request = commands.commit.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             val payload = provider.commit(txId)
             val response = Response(ResponseHeader(request.header.requestId, txId), payload)
-            CommitCommand.writeResponse(response, protocol)
+            commands.commit.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleFlush(protocol: Protocol, commandType: CommandType) {
-        val request = FlushCommand.readRequest(protocol)
+        val request = commands.flush.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             val sequenceNumber = request.header.sequenceNumber
@@ -73,12 +81,14 @@ class CommandHandler(
                 txn.flush()
             }
             val response = Response(ResponseHeader(request.header.requestId, txId), payload)
-            FlushCommand.writeResponse(response, protocol)
+            commands.flush.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleCreate(protocol: Protocol, commandType: CommandType) {
-        val request = CreateCommand.readRequest(protocol)
+        val request = commands.create.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             val sequenceNumber = request.header.sequenceNumber
@@ -87,12 +97,14 @@ class CommandHandler(
                 txn.create(request.payload!!)
             }
             val response = Response(ResponseHeader(request.header.requestId, txId), payload)
-            CreateCommand.writeResponse(response, protocol)
+            commands.create.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleUpdate(protocol: Protocol, commandType: CommandType) {
-        val request = UpdateCommand.readRequest(protocol)
+        val request = commands.update.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             val sequenceNumber = request.header.sequenceNumber
@@ -101,12 +113,14 @@ class CommandHandler(
                 txn.update(request.payload!!)
             }
             val response = Response(ResponseHeader(request.header.requestId, txId), payload)
-            UpdateCommand.writeResponse(response, protocol)
+            commands.update.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleDelete(protocol: Protocol, commandType: CommandType) {
-        val request = DeleteCommand.readRequest(protocol)
+        val request = commands.delete.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             val sequenceNumber = request.header.sequenceNumber
@@ -115,12 +129,14 @@ class CommandHandler(
                 txn.delete(request.payload!!)
             }
             val response = Response(ResponseHeader(request.header.requestId, txId), payload)
-            DeleteCommand.writeResponse(response, protocol)
+            commands.delete.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleGet(protocol: Protocol, commandType: CommandType) {
-        val request = GetCommand.readRequest(protocol)
+        val request = commands.get.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             val sequenceNumber = request.header.sequenceNumber
@@ -129,12 +145,14 @@ class CommandHandler(
                 txn.get(request.payload!!)
             }
             val response = Response(ResponseHeader(request.header.requestId, txId), payload)
-            GetCommand.writeResponse(response, protocol)
+            commands.get.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun handleFind(protocol: Protocol, commandType: CommandType) {
-        val request = FindCommand.readRequest(protocol)
+        val request = commands.find.readRequest(protocol)
+        log.debug("Request received [command={}, requestId={}]", commandType, request.header.requestId)
         withErrorHandler(request, protocol) {
             val txId = getTxId(request, commandType)
             val sequenceNumber = request.header.sequenceNumber
@@ -143,8 +161,9 @@ class CommandHandler(
                 txn.find(request.payload!!)
             }
             val response = Response(ResponseHeader(request.header.requestId, txId), payload)
-            FindCommand.writeResponse(response, protocol)
+            commands.find.writeResponse(response, protocol)
         }
+        log.debug("Response has been sent [command={}, requestId={}]", commandType, request.header.requestId)
     }
 
     private suspend fun withErrorHandler(
@@ -164,9 +183,9 @@ class CommandHandler(
                     val header = ResponseHeader(request.header.requestId, request.header.txId, true)
                     val response = Response(header, errorDto)
                     protocol.writeErrorResponse(response)
+                    log.info("Error occurred during command execution", e)
                 }
             }
-
         }
     }
 

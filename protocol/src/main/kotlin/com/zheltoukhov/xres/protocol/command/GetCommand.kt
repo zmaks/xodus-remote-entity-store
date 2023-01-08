@@ -1,12 +1,10 @@
 package com.zheltoukhov.xres.protocol.command
 
 import com.zheltoukhov.xres.protocol.Protocol
-import com.zheltoukhov.xres.protocol.dto.BooleanResultDto
 import com.zheltoukhov.xres.protocol.dto.EntityDto
 import com.zheltoukhov.xres.protocol.dto.EntityIdDto
-import com.zheltoukhov.xres.protocol.dto.TxDto
 
-object GetCommand : Command<EntityIdDto, EntityDto>() {
+class GetCommand : Command<EntityIdDto, EntityDto>() {
 
     override suspend fun writeRequestPayload(payload: EntityIdDto, protocol: Protocol) {
         protocol.writeEntityId(payload.id)

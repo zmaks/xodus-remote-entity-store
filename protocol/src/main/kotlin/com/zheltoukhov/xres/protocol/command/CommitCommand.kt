@@ -3,9 +3,8 @@ package com.zheltoukhov.xres.protocol.command
 import com.zheltoukhov.xres.protocol.EmptyPayload
 import com.zheltoukhov.xres.protocol.Protocol
 import com.zheltoukhov.xres.protocol.dto.BooleanResultDto
-import com.zheltoukhov.xres.protocol.dto.TxDto
 
-object CommitCommand : Command<EmptyPayload, BooleanResultDto>() {
+class CommitCommand : Command<EmptyPayload, BooleanResultDto>() {
 
     override suspend fun readResponsePayload(protocol: Protocol): BooleanResultDto {
         return protocol.readBooleanResult()

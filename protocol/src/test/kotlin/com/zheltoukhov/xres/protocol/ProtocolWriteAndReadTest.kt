@@ -1,6 +1,5 @@
 package com.zheltoukhov.xres.protocol
 
-import com.zheltoukhov.xres.protocol.command.CommandType
 import com.zheltoukhov.xres.protocol.dto.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,7 +15,7 @@ import kotlin.test.assertEquals
 class ProtocolWriteAndReadTest {
 
     private lateinit var protocol: Protocol
-    lateinit var channel: ByteChannel
+    private lateinit var channel: ByteChannel
 
     @BeforeEach
     fun setUp() {
@@ -31,10 +30,10 @@ class ProtocolWriteAndReadTest {
 
     @Test
     fun testCommandType() = runTest {
-        val command = CommandType.BEGIN_TX
-        protocol.writeCommandType(command)
+        val commandType = CommandType.BEGIN_TX
+        protocol.writeCommandType(commandType)
         protocol.flush()
-        assertEquals(command, protocol.readCommandType())
+        assertEquals(commandType, protocol.readCommandType())
     }
 
     @Test
@@ -43,6 +42,30 @@ class ProtocolWriteAndReadTest {
         protocol.writeUUID(uuid)
         protocol.flush()
         assertEquals(uuid.toString(), protocol.readUUID().toString())
+    }
+
+    @Test
+    fun testRequestHeader() = runTest {
+        val header = RequestHeader(UUID.randomUUID(), 42, UUID.randomUUID())
+        protocol.writeRequestHeader(header)
+        protocol.flush()
+        assertEquals(header, protocol.readRequestHeader())
+    }
+
+    @Test
+    fun testRequestHeader_nullTxId() = runTest {
+        val header = RequestHeader(UUID.randomUUID(), 42, null)
+        protocol.writeRequestHeader(header)
+        protocol.flush()
+        assertEquals(header, protocol.readRequestHeader())
+    }
+
+    @Test
+    fun testResponseHeader() = runTest {
+        val header = ResponseHeader(UUID.randomUUID(), UUID.randomUUID())
+        protocol.writeResponseHeader(header)
+        protocol.flush()
+        assertEquals(header, protocol.readResponseHeader())
     }
 
     @Test

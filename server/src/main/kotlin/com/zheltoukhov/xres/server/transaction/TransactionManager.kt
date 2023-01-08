@@ -5,7 +5,6 @@ import com.zheltoukhov.xres.protocol.dto.*
 import com.zheltoukhov.xres.server.exception.StoreException
 import jetbrains.exodus.entitystore.PersistentEntityStore
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -13,13 +12,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
-class TransactionProvider(
+class TransactionManager(
     private val store: PersistentEntityStore,
     private val txTimeoutMs: Long = 1 * 60 * 60 * 1000,
-    private val maxSequenceRetries: Int = 500,
+    private val maxSequenceRetries: Int = 100,
     private val sequenceWaitMs: Long = 10
 ) {
-
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
     private val contextStore = ConcurrentHashMap<UUID, TransactionContext>()
@@ -30,17 +28,15 @@ class TransactionProvider(
 
         val txn = XodusTransaction(store)
         val txId = txn.getTransactionId()
-        val context = TransactionContext(txn, Mutex(), AtomicInteger())
+        val context = TransactionContext(txn, AtomicInteger(0))
         contextStore[txId] = context
         register(txId)
 
-        log.debug("Transaction $txId has been registered")
         return txn
     }
 
     fun abort(txId: UUID) {
         removeTransactionContext(txId)?.transaction?.abort()
-            ?: throw StoreException("Unable to abort. Transaction $txId not found")
     }
 
     fun commit(txId: UUID): BooleanResultDto {
@@ -54,27 +50,20 @@ class TransactionProvider(
         transactionAction: (Transaction) -> T?
     ): T? {
         val context = getTransactionContext(txId)
-        return try {
-            context.mutex.lock()
-            if (sequenceNumber != context.lastSequenceNumber.get() + 1) {
-                context.mutex.unlock()
-                waitForSequence(txId, sequenceNumber, context.lastSequenceNumber.get())
-                context.mutex.lock()
-            }
-            val result = transactionAction(context.transaction)
-            context.lastSequenceNumber.incrementAndGet()
-            result
-        } finally {
-            context.mutex.unlock()
-        }
+        assureSequenceOrWait(txId, sequenceNumber, context.lastSequenceNumber)
+        log.debug("Executing action with sequence number {} in tx {}", sequenceNumber, txId)
+        val result = transactionAction(context.transaction)
+        context.lastSequenceNumber.incrementAndGet()
+        return result
     }
 
-    private suspend fun waitForSequence(txId: UUID, currentOrder: Int, lastOrder: Int) {
+    private suspend fun assureSequenceOrWait(txId: UUID, currentOrder: Int, lastOrder: AtomicInteger) {
         var retries = 0
-        while (currentOrder != lastOrder + 1) {
+        while (currentOrder != lastOrder.get() + 1) {
             if (++retries >= maxSequenceRetries) {
                 abort(txId)
-                throw StoreException("Tr")
+                throw StoreException("Sequence number of transaction $txId is further than previous executed operation." +
+                        "The transaction has been aborted.")
             }
             delay(sequenceWaitMs)
         }
@@ -106,7 +95,6 @@ class TransactionProvider(
 
     data class TransactionContext(
         val transaction: Transaction,
-        val mutex: Mutex,
         val lastSequenceNumber: AtomicInteger
     )
 }

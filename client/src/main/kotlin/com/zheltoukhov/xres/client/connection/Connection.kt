@@ -2,25 +2,29 @@ package com.zheltoukhov.xres.client.connection
 
 import com.zheltoukhov.xres.protocol.Protocol
 import io.ktor.network.sockets.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 
 class Connection(
     private val socketFactory: SocketFactory
 ) : Closeable {
 
+    private val log: Logger = LoggerFactory.getLogger(javaClass)
+
     private lateinit var socket: Socket
 
     suspend fun connect(): Protocol {
         socket = socketFactory.create()
-        println("connect ${socket.localAddress}")
+        log.debug("Connected to {}", socket.localAddress)
         return Protocol(socket.openWriteChannel(), socket.openReadChannel())
     }
 
     override fun close() {
         if (isConnected()) {
-            val ra = socket.localAddress
+            val remoteAddress = socket.remoteAddress
             socket.close()
-            println("close $ra")
+            log.debug("Closed connection to {}", remoteAddress)
         }
     }
 

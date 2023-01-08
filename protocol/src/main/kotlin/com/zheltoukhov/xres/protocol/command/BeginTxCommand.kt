@@ -4,7 +4,7 @@ import com.zheltoukhov.xres.protocol.EmptyPayload
 import com.zheltoukhov.xres.protocol.Protocol
 import com.zheltoukhov.xres.protocol.dto.TxDto
 
-object BeginTxCommand : Command<TxDto, EmptyPayload>() {
+class BeginTxCommand : Command<TxDto, EmptyPayload>() {
 
     override suspend fun writeRequestPayload(payload: TxDto, protocol: Protocol) {
         protocol.writeTx(payload)
