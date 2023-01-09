@@ -1,11 +1,69 @@
 # Xodus Remote Entity Store
 
+# Server
+
+Xodus entity sore service can be started via docker:
+```
+docker run -p 9042:9042 -v xodus-data:/var/opt/xodus -e XRES_DIR=/var/opt/xodus  zumaxim/xres:latest
+```
+
+ENV variables:
+- `XRES_PORT` - the Xodus Server port (9042 by default)
+- `XRES_DIR` - the directory to store xodus data 
+
+# Client
+
+Xodus Client JVM library provides an API to connect to Xodus Remote Entity Store and work with the storage 
+The dependency is available as [GitHub Package](https://github.com/zmaks/xodus-remote-entity-store/packages)
+
+**Gradle:**
+```
+implementation 'com.zheltoukhov.xres:client:1.0.0'
+```
+
+**Maven:**
+```xml
+<dependency>
+  <groupId>com.zheltoukhov.xres</groupId>
+  <artifactId>client</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+Check the latest version in the [releases section](https://github.com/zmaks/xodus-remote-entity-store/releases).
+
+## Example
+
+```kotlin
+val tx = entityStore.beginTransaction()
+
+val entity1 = tx.create(EntityDto(type = "CRUD", properties = mapOf("foo" to "bar")))
+val entity2 = tx.create(EntityDto(type = "CRUD", properties = mapOf("two" to 2)))
+
+val updatedEntity2 = tx.update(
+    EntityDto(entity2.id, "CRUD", entity2.properties + mapOf("some" to "new"))
+)
+
+tx.delete(entity2.id!!)
+
+val entitiesPage = tx.find(FilterDto("CRUD"))
+
+entitiesPage.content.size
+entitiesPage.content.first().id
+
+tx.get(entity1.id!!).id
+
+tx.commit()
+```
+
+---
+
 # Proposal
 
 This part describes the design and description of the remote entity storage MVP.
 
 **Authors:** Maksim Zheltoukhov  
-**Status:** _Discussion_
+**Status:** _Implemented_
 
 ## Abstract
 
@@ -66,6 +124,8 @@ The reasons of using Ktor:
 3. [Connection] Add client connection pool support
 4. [ORM] Add ORM support to the client lib
 5. Improve entity search/filtering
+6. Support readonly and exclusive transactions
+7. Improve error handling
 
 
 

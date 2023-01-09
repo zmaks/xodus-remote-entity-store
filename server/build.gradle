@@ -53,4 +53,7 @@ jib {
     to {
         image = "zumaxim/xres"
     }
+    container {
+        ports = ["9042"]
+    }
 }

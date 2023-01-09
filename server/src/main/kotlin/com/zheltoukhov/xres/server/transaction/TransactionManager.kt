@@ -52,9 +52,11 @@ class TransactionManager(
         val context = getTransactionContext(txId)
         assureSequenceOrWait(txId, sequenceNumber, context.lastSequenceNumber)
         log.debug("Executing action with sequence number {} in tx {}", sequenceNumber, txId)
-        val result = transactionAction(context.transaction)
-        context.lastSequenceNumber.incrementAndGet()
-        return result
+        return try {
+            transactionAction(context.transaction)
+        } finally {
+            context.lastSequenceNumber.incrementAndGet()
+        }
     }
 
     private suspend fun assureSequenceOrWait(txId: UUID, currentOrder: Int, lastOrder: AtomicInteger) {

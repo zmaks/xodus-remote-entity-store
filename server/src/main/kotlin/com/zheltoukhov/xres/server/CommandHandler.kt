@@ -174,7 +174,6 @@ class CommandHandler(
         try {
             action()
         } catch (e: Exception) {
-            request.header.txId?.let { provider.abort(it) }
             when (e) {
                 is CommunicationException -> throw e
                 else -> {
@@ -183,7 +182,7 @@ class CommandHandler(
                     val header = ResponseHeader(request.header.requestId, request.header.txId, true)
                     val response = Response(header, errorDto)
                     protocol.writeErrorResponse(response)
-                    log.info("Error occurred during command execution", e)
+                    log.info("Error occurred during command execution {}:", e.message)
                 }
             }
         }

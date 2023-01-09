@@ -12,6 +12,12 @@ class EntityStore(
     private val client: StoreClient
 ) {
 
+    /**
+     * Runs a transaction on the server and return the transaction object
+     * that allows to run actions within the transaction
+     *
+     * @return Transaction
+     */
     suspend fun beginTransaction(): Transaction {
         val txDto = TxDto(false) //todo implement readOnly transactions
         val request = Request(RequestHeader(UUID.randomUUID(), 0), txDto)

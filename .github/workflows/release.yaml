@@ -51,10 +51,15 @@ jobs:
           github-token: "${{ github.token }}"
           script: |
             const RELEASE_TAG = process.env.RELEASE_TAG
+            const BODY = `Server component is available on`
+                    + ` [DockerHub](https://hub.docker.com/repository/docker/zumaxim/xres/general):` 
+                    + ` \`docker pull zumaxim/xres:${RELEASE_TAG}\`\nClient library dependency is available on`
+                    + ` [GitHub Packages](https://github.com/zmaks/xodus-remote-entity-store/packages):`
+                    + `\`implementation 'com.zheltoukhov.xres:client:${RELEASE_TAG}'\``
             try {
               await github.rest.repos.createRelease({
                 name: `${RELEASE_TAG}`,
-                body: `Server component is available on [DockerHub](https://hub.docker.com/repository/docker/zumaxim/xres/general): \`docker pull zumaxim/xres:${RELEASE_TAG}\`\nClient library dependency is available on [GitHub Packages]: \`implementation 'com.zheltoukhov.xres:client:${RELEASE_TAG}'\``,
+                body: BODY,
                 draft: false,
                 owner: context.repo.owner,
                 prerelease: false,

@@ -2,6 +2,7 @@ package com.zheltoukhov.xres.client
 
 import com.zheltoukhov.xres.protocol.*
 import com.zheltoukhov.xres.protocol.dto.*
+import com.zheltoukhov.xres.protocol.exception.CommandErrorException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -15,13 +16,31 @@ class Transaction(
 
     private val lastCommandSequenceNumber = AtomicInteger(0)
 
+    /**
+     * Creates a new entity on the server entity store
+     *
+     * @param dto - entity dto with null id
+     * @return EntityDto - saved entity with id from the server
+     */
     suspend fun create(dto: EntityDto): EntityDto {
+        check(dto.id == null) {
+            "New entity id should be null"
+        }
         val request = createRequest(dto)
         log.debug("[tx={} seqNum={}] creating new entity with type {}", txId, request.header.sequenceNumber, dto.type)
         val response = client.sendCommand<EntityDto, EntityDto>(CommandType.CREATE, request)
         return response.payload!!
     }
 
+    /**
+     * Updates properties of the provided entity
+     *
+     * Note that setting property value as false means deleting the property,
+     * false value is equal to delete the property from the properties map
+     *
+     * @param dto - the entity to update
+     * @return EntityDto - updated entity with id from the server
+     */
     suspend fun update(dto: EntityDto): EntityDto {
         check(dto.id != null) {
             "Entity with null id cannot be updated"
@@ -32,6 +51,12 @@ class Transaction(
         return response.payload!!
     }
 
+    /**
+     * Deletes entity by its id
+     *
+     * @param entityId - the id of the entity to delete
+     * @return true if entity was successfully deleted
+     */
     suspend fun delete(entityId: String): Boolean {
         val request = createRequest(EntityIdDto(entityId))
         log.debug("[tx={} seqNum={}] deleting entity with id {}", txId, request.header.sequenceNumber, entityId)
@@ -39,6 +64,13 @@ class Transaction(
         return response.payload!!.result
     }
 
+    /**
+     * Gets entity by its id
+     *
+     * @param entityId - the id of the entity to get
+     * @return EntityDto object
+     * @throws CommandErrorException if entity is not found
+     */
     suspend fun get(entityId: String): EntityDto {
         val request = createRequest(EntityIdDto(entityId))
         log.debug("[tx={} seqNum={}] get entity by id {}", txId, request.header.sequenceNumber, entityId)
