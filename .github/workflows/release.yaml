@@ -2,6 +2,10 @@ name: Release Server Tag
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version to release"
+        required: true
 
 jobs:
   release_job:
@@ -9,13 +13,10 @@ jobs:
     env:
       RELEASE_TAG: ${{ github.event.inputs.tag }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: 'Get Previous tag'
-        id: previous_tag
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        #TODO: Add a tag validation step to check that the tag is the next comparing with the previous
 
       - name: Login to DockerHub Registry
         run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u zumaxim --password-stdin
@@ -24,14 +25,12 @@ jobs:
         run: |
           ./gradlew :server:jib \
             --console=plain \
-            -Dcontainer.tags=${{ steps.previous_tag.outputs.tag }}
+            -Dcontainer.tags=$RELEASE_TAG
 
       - name: "Create release"
         uses: "actions/github-script@v5"
         with:
           github-token: "${{ github.token }}"
-          env:
-            RELEASE_TAGE: ${{ steps.previous_tag.outputs.tag }}
           script: |
             try {
               await github.rest.repos.createRelease({
