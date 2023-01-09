@@ -35,6 +35,8 @@ Check the latest version in the [releases section](https://github.com/zmaks/xodu
 ## Example
 
 ```kotlin
+val conf = SocketConfig("localhost", 9042)
+val entityStore = EntityStore(StoreClient(conf))
 val tx = entityStore.beginTransaction()
 
 val entity1 = tx.create(EntityDto(type = "CRUD", properties = mapOf("foo" to "bar")))
