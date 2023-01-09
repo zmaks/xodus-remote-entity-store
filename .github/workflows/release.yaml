@@ -36,7 +36,7 @@ jobs:
             try {
               await github.rest.repos.createRelease({
                 name: `Server Version ${RELEASE_TAG}`,
-                body: `Available on DockerHub: \`docker pull zumaxim/xres:${RELEASE_TAG}\``",
+                body: `Available on DockerHub: \`docker pull zumaxim/xres:${RELEASE_TAG}\``,
                 draft: false,
                 owner: context.repo.owner,
                 prerelease: false,
