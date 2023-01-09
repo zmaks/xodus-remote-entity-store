@@ -29,8 +29,8 @@ jobs:
 
       - name: Publish client
         env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ github.token }}
+          USERNAME: ${{ github.actor }}
+          TOKEN: ${{ github.token }}
         run: |
           ./gradlew :client:publish \
             --console=plain \
