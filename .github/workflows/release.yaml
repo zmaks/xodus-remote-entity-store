@@ -25,7 +25,7 @@ jobs:
         run: |
           ./gradlew :server:jib \
             --console=plain \
-            -Dcontainer.tags=$RELEASE_TAG
+            -Djib.to.tags=$RELEASE_TAG
 
       - name: "Create release"
         uses: "actions/github-script@v6"
@@ -35,8 +35,8 @@ jobs:
             const RELEASE_TAG = process.env.RELEASE_TAG
             try {
               await github.rest.repos.createRelease({
-                name: "Server version ${RELEASE_TAG}",
-                body: "`docker pull zumaxim/xres:${RELEASE_TAG}`",
+                name: `Server Version ${RELEASE_TAG}`,
+                body: `Available on DockerHub: \`docker pull zumaxim/xres:${RELEASE_TAG}\``",
                 draft: false,
                 owner: context.repo.owner,
                 prerelease: false,
