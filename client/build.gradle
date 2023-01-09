@@ -22,8 +22,13 @@ test {
     useJUnitPlatform()
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     repositories {
+        mavenLocal()
         maven {
             name = "GitHubPackages"
             url = "https://maven.pkg.github.com/zmaks/xodus-remote-entity-store"
@@ -34,7 +39,7 @@ publishing {
         }
     }
     publications {
-        gpr(MavenPublication) {
+        mavenJava(MavenPublication) {
             from(components.java)
         }
     }
