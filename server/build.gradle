@@ -1,10 +1,11 @@
 plugins {
     id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
     id "io.ktor.plugin" version "$ktor_version"
+    id "com.google.cloud.tools.jib" version "3.3.1"
 }
 
 group "com.zheltoukhov.xres"
-version "0.0.1"
+version "1.0.0"
 mainClassName = "com.zheltoukhov.xres.server.Application.kt"
 
 repositories {
@@ -46,4 +47,10 @@ def defaultTestSpec = {
 test {
     with defaultTestSpec
     include '**/*Test.class'
+}
+
+jib {
+    to {
+        image = "zumaxim/xres"
+    }
 }
